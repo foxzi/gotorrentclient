@@ -3,7 +3,6 @@ package main
 import (
 	"context" // Added for HTTPDialContext
 	"flag"
-	"fmt"
 	"log"
 	"net"      // Added for proxy dialing
 	"net/http" // Added for HTTP client proxy
@@ -16,6 +15,8 @@ import (
 	"github.com/anacrolix/torrent"
 	"golang.org/x/net/proxy"
 	"golang.org/x/time/rate"
+
+	"gotorrentclient/utils" // Added for FormatBytes
 )
 
 func main() {
@@ -172,7 +173,7 @@ func main() {
 						t.Name(),
 						currentRatio,
 						*seedRatio,
-						formatBytes(bytesUploaded))
+						utils.FormatBytes(bytesUploaded))
 
 					// If we've reached the desired ratio, stop seeding
 					if currentRatio >= *seedRatio {
@@ -187,7 +188,7 @@ func main() {
 					// Just show seeding status without ratio check
 					log.Printf("Seeding: %s, Uploaded: %s",
 						t.Name(),
-						formatBytes(bytesUploaded))
+						utils.FormatBytes(bytesUploaded))
 				}
 
 				if !*enableSeeding {
@@ -211,10 +212,10 @@ func main() {
 			} else if t.Length() > 0 {
 				log.Printf("%.2f%% complete. Downloaded: %s / %s. Peers: %d, Uploaded: %s",
 					percent,
-					formatBytes(bytesCompleted),
-					formatBytes(t.Length()),
+					utils.FormatBytes(bytesCompleted),
+					utils.FormatBytes(t.Length()),
 					stats.ActivePeers,
-					formatBytes(bytesUploaded),
+					utils.FormatBytes(bytesUploaded),
 				)
 			}
 			time.Sleep(2 * time.Second)
@@ -232,18 +233,4 @@ func main() {
 	// If shutdown was initiated by a signal, the goroutine above will handle exit.
 	// If downloads completed normally, we reach here.
 	log.Println("Download process finished.")
-}
-
-// formatBytes converts bytes to a human-readable string
-func formatBytes(b int64) string {
-	const unit = 1024
-	if b < unit {
-		return fmt.Sprintf("%d B", b)
-	}
-	div, exp := int64(unit), 0
-	for n := b / unit; n >= unit; n /= unit {
-		div *= unit
-		exp++
-	}
-	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
