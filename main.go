@@ -3,6 +3,7 @@ package main
 import (
 	"context" // Added for HTTPDialContext
 	"flag"
+	"fmt"
 	"log"
 	"net"      // Added for proxy dialing
 	"net/http" // Added for HTTP client proxy
@@ -19,8 +20,12 @@ import (
 	"gotorrentclient/utils" // Added for FormatBytes
 )
 
+// Version information - will be set during build
+var version = "dev"
+
 func main() {
 	// Define command-line flags
+	showVersion := flag.Bool("version", false, "Show version information and exit")
 	maxPeers := flag.Int("max-peers", 50, "Maximum number of peers to connect to per torrent")
 	downloadDir := flag.String("download-dir", "./downloads", "Directory to download torrents to")
 	downloadRateMbps := flag.Float64("download-rate", 0, "Maximum download rate in Mbps (0 for unlimited)")
@@ -29,6 +34,12 @@ func main() {
 	enableSeeding := flag.Bool("enable-seeding", false, "Enable seeding after download completes")
 	proxyURL := flag.String("proxy", "", "Proxy URL (e.g., socks5://user:pass@host:port or http://host:port)") // New flag
 	flag.Parse()
+
+	// Show version if requested
+	if *showVersion {
+		fmt.Printf("gotorrentclient %s\n", version)
+		os.Exit(0)
+	}
 
 	if len(flag.Args()) < 1 {
 		log.Fatalf("Usage: %s [options] <magnet link or torrent file>", os.Args[0])
