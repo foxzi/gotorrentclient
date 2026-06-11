@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login - gotorrentclient</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container center">
+  <h1>gotorrentclient</h1>
+  {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+  <form method="POST" action="/login">
+    <label>Username<br><input type="text" name="username" autofocus required></label><br>
+    <label>Password<br><input type="password" name="password" required></label><br>
+    <button type="submit">Login</button>
+  </form>
+</div>
+</body>
+</html>

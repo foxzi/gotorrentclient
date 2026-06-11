@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="2">
+<title>gotorrentclient</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>gotorrentclient</h1>
+    <form method="POST" action="/logout" style="display:inline">
+      <button type="submit" class="btn-logout">Logout</button>
+    </form>
+  </div>
+
+  <form method="POST" action="/add" enctype="multipart/form-data" class="add-form">
+    <input type="text" name="magnet" placeholder="Magnet link..." class="magnet-input">
+    <label class="file-label">
+      <input type="file" name="torrentfile" accept=".torrent">
+      .torrent file
+    </label>
+    <button type="submit">Add</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Progress</th>
+        <th>Downloaded</th>
+        <th>Peers</th>
+        <th>Uploaded</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {{range .Torrents}}
+      <tr{{if .Done}} class="done"{{end}}>
+        <td>{{.Name}}</td>
+        <td>{{.Percent}}%</td>
+        <td>{{.Completed}} / {{.Length}}</td>
+        <td>{{.Peers}}</td>
+        <td>{{.Uploaded}}</td>
+        <td>
+          <form method="POST" action="/drop">
+            <input type="hidden" name="id" value="{{.ID}}">
+            <button type="submit" class="btn-drop">Drop</button>
+          </form>
+        </td>
+      </tr>
+    {{else}}
+      <tr><td colspan="6" class="empty">No torrents</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>
