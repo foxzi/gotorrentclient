@@ -99,6 +99,18 @@ go build -o gotorrentclient main.go
 # Downloads at max 10 Mbps, seeds at max 2 Mbps until ratio reaches 2.0
 ```
 
+### Web Interface
+
+A built-in web daemon manages multiple torrents at once from a browser.
+
+```bash
+./gotorrentclient --web --username admin --password secret --download-dir ./downloads
+# Open http://localhost:8080
+```
+
+Credentials can also be set via `GTC_USERNAME` / `GTC_PASSWORD`, and the
+listen address via `GTC_LISTEN`. See [docs/web-en.md](docs/web-en.md) for details.
+
 <a name="russian"></a>
 ## Русская Документация
 
@@ -195,3 +207,14 @@ go build -o gotorrentclient main.go
 ./gotorrentclient --download-rate=10.0 --upload-rate=2.0 --enable-seeding --seed-ratio=2.0 --max-peers=100 magnet:?xt=urn:btih:ХЕШ
 # Загрузка со скоростью до 10 Мбит/с, раздача со скоростью до 2 Мбит/с до достижения коэффициента 2.0
 ```
+### Веб-интерфейс
+
+Встроенный веб-демон управляет несколькими торрентами одновременно из браузера.
+
+```bash
+./gotorrentclient --web --username admin --password secret --download-dir ./downloads
+# Откройте http://localhost:8080
+```
+
+Учётные данные также можно задать через `GTC_USERNAME` / `GTC_PASSWORD`,
+а адрес прослушивания — через `GTC_LISTEN`. Подробнее: [docs/web-ru.md](docs/web-ru.md).
