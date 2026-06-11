@@ -1,0 +1,45 @@
+# gotorrentclient - example configuration file
+# Copy to your preferred location and pass via --config /path/to/config.yaml
+# or set the GTC_CONFIG environment variable.
+#
+# Precedence (lowest to highest):
+#   built-in defaults -> this file -> env variables -> command-line flags
+
+# Address the web UI listens on.
+# Overridden by env GTC_LISTEN or flag --listen.
+listen: ":8080"
+
+# Web UI credentials.
+# Overridden by env GTC_USERNAME / GTC_PASSWORD or flags --username / --password.
+username: ""
+password: ""
+
+engine:
+  # Directory where downloaded files are stored.
+  # Overridden by flag --download-dir.
+  download_dir: "./downloads"
+
+  # Maximum number of peer connections per torrent.
+  # Overridden by flag --max-peers.
+  max_peers: 50
+
+  # Maximum download speed in Mbps. 0 means unlimited.
+  # Overridden by flag --download-rate.
+  download_rate_mbps: 0
+
+  # Maximum upload speed in Mbps. 0 means unlimited.
+  # Overridden by flag --upload-rate.
+  upload_rate_mbps: 0
+
+  # Whether to keep seeding after a download finishes.
+  # Overridden by flag --enable-seeding.
+  enable_seeding: false
+
+  # Stop seeding when upload/download ratio reaches this value. 0 means unlimited.
+  # Overridden by flag --seed-ratio.
+  seed_ratio: 0
+
+  # Optional proxy URL. Supported schemes: http, https, socks5.
+  # Example: socks5://user:pass@host:1080
+  # Overridden by flag --proxy.
+  proxy_url: ""

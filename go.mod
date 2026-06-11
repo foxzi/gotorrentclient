@@ -8,6 +8,7 @@ require (
 	github.com/anacrolix/torrent v1.58.1
 	golang.org/x/net v0.29.0
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

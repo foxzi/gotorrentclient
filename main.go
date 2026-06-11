@@ -22,13 +22,14 @@ var version = "dev"
 
 func main() {
 	showVersion := flag.Bool("version", false, "Show version information and exit")
-	maxPeers := flag.Int("max-peers", 50, "Maximum number of peers to connect to per torrent")
+	configFile := flag.String("config", "", "Path to YAML config file (or GTC_CONFIG env var)")
+	maxPeers := flag.Int("max-peers", 50, "Maximum number of peers per torrent")
 	downloadDir := flag.String("download-dir", "./downloads", "Directory to download torrents to")
-	downloadRateMbps := flag.Float64("download-rate", 0, "Maximum download rate in Mbps (0 for unlimited)")
-	uploadRateMbps := flag.Float64("upload-rate", 0, "Maximum upload rate in Mbps (0 for unlimited)")
-	seedRatio := flag.Float64("seed-ratio", 0, "Seed ratio (0 for unlimited)")
+	downloadRateMbps := flag.Float64("download-rate", 0, "Maximum download rate in Mbps (0 = unlimited)")
+	uploadRateMbps := flag.Float64("upload-rate", 0, "Maximum upload rate in Mbps (0 = unlimited)")
+	seedRatio := flag.Float64("seed-ratio", 0, "Seed ratio (0 = unlimited)")
 	enableSeeding := flag.Bool("enable-seeding", false, "Enable seeding after download completes")
-	proxyURL := flag.String("proxy", "", "Proxy URL (e.g., socks5://user:pass@host:port or http://host:port)")
+	proxyURL := flag.String("proxy", "", "Proxy URL (e.g. socks5://user:pass@host:port)")
 	webMode := flag.Bool("web", false, "Start web UI daemon instead of CLI download")
 	listen := flag.String("listen", "", "Web listen address (default :8080, or GTC_LISTEN)")
 	username := flag.String("username", "", "Web UI username (or GTC_USERNAME)")
@@ -40,27 +41,69 @@ func main() {
 		os.Exit(0)
 	}
 
-	engineCfg := torrentmgr.EngineConfig{
-		DownloadDir:      *downloadDir,
-		MaxPeers:         *maxPeers,
-		DownloadRateMbps: *downloadRateMbps,
-		UploadRateMbps:   *uploadRateMbps,
-		EnableSeeding:    *enableSeeding,
-		SeedRatio:        *seedRatio,
-		ProxyURL:         *proxyURL,
+	// Collect flags that were explicitly provided on the command line.
+	setFlags := make(map[string]bool)
+	flag.Visit(func(f *flag.Flag) {
+		setFlags[f.Name] = true
+	})
+
+	// Determine config file path: flag takes precedence over env var.
+	cfgPath := *configFile
+	if cfgPath == "" {
+		cfgPath = os.Getenv("GTC_CONFIG")
 	}
 
+	// Load YAML config file if a path was provided.
+	var fc config.FileConfig
+	if cfgPath != "" {
+		var err error
+		fc, err = config.LoadFile(cfgPath)
+		if err != nil {
+			log.Fatalf("Config error: %v", err)
+		}
+	}
+
+	// Defaults come from the flag package defaults (already reflected in pointer values).
+	defaults := config.Config{
+		Listen:   *listen,
+		Username: *username,
+		Password: *password,
+		Engine: torrentmgr.EngineConfig{
+			DownloadDir:      *downloadDir,
+			MaxPeers:         *maxPeers,
+			DownloadRateMbps: *downloadRateMbps,
+			UploadRateMbps:   *uploadRateMbps,
+			EnableSeeding:    *enableSeeding,
+			SeedRatio:        *seedRatio,
+			ProxyURL:         *proxyURL,
+		},
+	}
+
+	params := config.Params{
+		Listen:        *listen,
+		Username:      *username,
+		Password:      *password,
+		DownloadDir:   *downloadDir,
+		MaxPeers:      *maxPeers,
+		DownloadRate:  *downloadRateMbps,
+		UploadRate:    *uploadRateMbps,
+		EnableSeeding: *enableSeeding,
+		SeedRatio:     *seedRatio,
+		ProxyURL:      *proxyURL,
+		SetFlags:      setFlags,
+	}
+
+	cfg := config.Build(defaults, fc, params)
+
 	if *webMode {
-		runWeb(engineCfg, *listen, *username, *password)
+		runWeb(cfg)
 		return
 	}
 
-	runCLI(engineCfg, *enableSeeding, *seedRatio)
+	runCLI(cfg.Engine)
 }
 
-func runWeb(engineCfg torrentmgr.EngineConfig, listen, username, password string) {
-	cfg := config.Load(engineCfg, listen, username, password)
-
+func runWeb(cfg config.Config) {
 	if cfg.Username == "" || cfg.Password == "" {
 		log.Fatal("Web mode requires credentials: set --username/--password or GTC_USERNAME/GTC_PASSWORD")
 	}
@@ -95,15 +138,15 @@ func runWeb(engineCfg torrentmgr.EngineConfig, listen, username, password string
 	}
 }
 
-func runCLI(engineCfg torrentmgr.EngineConfig, enableSeeding bool, seedRatio float64) {
+func runCLI(engineCfg torrentmgr.EngineConfig) {
 	if len(flag.Args()) < 1 {
 		log.Fatalf("Usage: %s [options] <magnet link or torrent file>", os.Args[0])
 	}
 	uri := flag.Arg(0)
 
-	if enableSeeding {
-		if seedRatio > 0 {
-			log.Printf("Seeding enabled with ratio %.2f", seedRatio)
+	if engineCfg.EnableSeeding {
+		if engineCfg.SeedRatio > 0 {
+			log.Printf("Seeding enabled with ratio %.2f", engineCfg.SeedRatio)
 		} else {
 			log.Printf("Seeding enabled with unlimited ratio")
 		}
@@ -162,18 +205,18 @@ func runCLI(engineCfg torrentmgr.EngineConfig, enableSeeding bool, seedRatio flo
 			bytesUploaded = stats.BytesWrittenData.Int64()
 
 			if bytesCompleted == t.Length() && t.Length() > 0 {
-				if !seedingStarted && enableSeeding {
+				if !seedingStarted && engineCfg.EnableSeeding {
 					seedingStarted = true
 					initialBytesCompleted = bytesCompleted
 					log.Printf("Download complete. Starting to seed: %s", t.Name())
 				}
 
-				if seedingStarted && seedRatio > 0 {
+				if seedingStarted && engineCfg.SeedRatio > 0 {
 					currentRatio := float64(bytesUploaded) / float64(initialBytesCompleted)
 					log.Printf("Seeding: %s, Ratio: %.2f/%.2f, Uploaded: %s",
-						t.Name(), currentRatio, seedRatio, utils.FormatBytes(bytesUploaded))
-					if currentRatio >= seedRatio {
-						log.Printf("Reached target seed ratio of %.2f. Stopping seeding.", seedRatio)
+						t.Name(), currentRatio, engineCfg.SeedRatio, utils.FormatBytes(bytesUploaded))
+					if currentRatio >= engineCfg.SeedRatio {
+						log.Printf("Reached target seed ratio of %.2f. Stopping seeding.", engineCfg.SeedRatio)
 						go func() { sigChan <- syscall.SIGTERM }()
 						return
 					}
@@ -181,7 +224,7 @@ func runCLI(engineCfg torrentmgr.EngineConfig, enableSeeding bool, seedRatio flo
 					log.Printf("Seeding: %s, Uploaded: %s", t.Name(), utils.FormatBytes(bytesUploaded))
 				}
 
-				if !enableSeeding {
+				if !engineCfg.EnableSeeding {
 					return
 				}
 				time.Sleep(5 * time.Second)
