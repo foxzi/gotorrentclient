@@ -2,9 +2,13 @@ package torrentmgr
 
 import (
 	"sync"
+	"time"
 
 	"github.com/anacrolix/torrent"
 )
+
+// seedCheckInterval is how often the seed ratio is re-evaluated.
+const seedCheckInterval = 5 * time.Second
 
 // Manager wraps a torrent.Client and exposes simple operations for the web UI.
 type Manager struct {
@@ -68,7 +72,33 @@ func (m *Manager) startWhenReady(t *torrent.Torrent) {
 	go func() {
 		<-t.GotInfo()
 		t.DownloadAll()
+		if m.cfg.EnableSeeding && m.cfg.SeedRatio > 0 {
+			m.monitorSeedRatio(t)
+		}
 	}()
+}
+
+// monitorSeedRatio drops the torrent once the upload/size ratio reaches the
+// configured SeedRatio. It exits early if the torrent is dropped elsewhere.
+func (m *Manager) monitorSeedRatio(t *torrent.Torrent) {
+	ticker := time.NewTicker(seedCheckInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-t.Closed():
+			return
+		case <-ticker.C:
+			length := t.Length()
+			if length <= 0 || t.BytesCompleted() < length {
+				continue
+			}
+			uploaded := t.Stats().BytesWrittenData
+			if float64(uploaded.Int64())/float64(length) >= m.cfg.SeedRatio {
+				t.Drop()
+				return
+			}
+		}
+	}
 }
 
 // List returns a snapshot of all torrents managed by the client.
