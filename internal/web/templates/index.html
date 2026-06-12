@@ -6,14 +6,23 @@
 <meta http-equiv="refresh" content="2">
 <title>gotorrentclient</title>
 <link rel="stylesheet" href="/static/style.css">
+<script>
+(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.dataset.theme=t;
+})();
+</script>
 </head>
 <body>
 <div class="container">
   <div class="header">
     <h1>gotorrentclient</h1>
-    <form method="POST" action="/logout" style="display:inline">
-      <button type="submit" class="btn-logout">Logout</button>
-    </form>
+    <div class="header-controls">
+      <button type="button" id="theme-btn" class="btn-theme"></button>
+      <form method="POST" action="/logout" style="display:inline">
+        <button type="submit" class="btn-logout">Logout</button>
+      </form>
+    </div>
   </div>
 
   <form method="POST" action="/add" enctype="multipart/form-data" class="add-form">
@@ -57,5 +66,18 @@
     </tbody>
   </table>
 </div>
+<script>
+(function(){
+  var btn=document.getElementById('theme-btn');
+  function label(t){return t==='dark'?'Theme: Dark':'Theme: Light';}
+  btn.textContent=label(document.documentElement.dataset.theme);
+  btn.onclick=function(){
+    var next=document.documentElement.dataset.theme==='dark'?'light':'dark';
+    document.documentElement.dataset.theme=next;
+    localStorage.setItem('theme',next);
+    btn.textContent=label(next);
+  };
+})();
+</script>
 </body>
 </html>
