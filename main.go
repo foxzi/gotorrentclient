@@ -105,7 +105,7 @@ func main() {
 
 func runWeb(cfg config.Config) {
 	if cfg.Username == "" || cfg.Password == "" {
-		log.Fatal("Web mode requires credentials: set --username/--password or GTC_USERNAME/GTC_PASSWORD")
+		log.Println("WARNING: running without authentication -- web interface is open to anyone")
 	}
 
 	if err := os.MkdirAll(cfg.Engine.DownloadDir, 0755); err != nil {
