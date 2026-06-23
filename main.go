@@ -199,10 +199,29 @@ func runCLI(engineCfg torrentmgr.EngineConfig) {
 	seedingStarted := false
 
 	go func() {
+		var prevDownloaded, prevUploaded int64
+		prevTime := time.Now()
 		for {
 			stats := t.Stats()
 			bytesCompleted := t.BytesCompleted()
 			bytesUploaded = stats.BytesWrittenData.Int64()
+
+			now := time.Now()
+			elapsed := now.Sub(prevTime).Seconds()
+			var dlSpeed, ulSpeed int64
+			if elapsed >= 0.5 {
+				dlSpeed = int64(float64(bytesCompleted-prevDownloaded) / elapsed)
+				ulSpeed = int64(float64(bytesUploaded-prevUploaded) / elapsed)
+				if dlSpeed < 0 {
+					dlSpeed = 0
+				}
+				if ulSpeed < 0 {
+					ulSpeed = 0
+				}
+				prevDownloaded = bytesCompleted
+				prevUploaded = bytesUploaded
+				prevTime = now
+			}
 
 			if bytesCompleted == t.Length() && t.Length() > 0 {
 				if !seedingStarted && engineCfg.EnableSeeding {
@@ -213,15 +232,17 @@ func runCLI(engineCfg torrentmgr.EngineConfig) {
 
 				if seedingStarted && engineCfg.SeedRatio > 0 {
 					currentRatio := float64(bytesUploaded) / float64(initialBytesCompleted)
-					log.Printf("Seeding: %s, Ratio: %.2f/%.2f, Uploaded: %s",
-						t.Name(), currentRatio, engineCfg.SeedRatio, utils.FormatBytes(bytesUploaded))
+					log.Printf("Seeding: %s, Ratio: %.2f/%.2f, Uploaded: %s, Up: %s/s",
+						t.Name(), currentRatio, engineCfg.SeedRatio,
+						utils.FormatBytes(bytesUploaded), utils.FormatBytes(ulSpeed))
 					if currentRatio >= engineCfg.SeedRatio {
 						log.Printf("Reached target seed ratio of %.2f. Stopping seeding.", engineCfg.SeedRatio)
 						go func() { sigChan <- syscall.SIGTERM }()
 						return
 					}
 				} else if seedingStarted {
-					log.Printf("Seeding: %s, Uploaded: %s", t.Name(), utils.FormatBytes(bytesUploaded))
+					log.Printf("Seeding: %s, Uploaded: %s, Up: %s/s",
+						t.Name(), utils.FormatBytes(bytesUploaded), utils.FormatBytes(ulSpeed))
 				}
 
 				if !engineCfg.EnableSeeding {
@@ -240,12 +261,13 @@ func runCLI(engineCfg torrentmgr.EngineConfig) {
 			if t.Length() == 0 && bytesCompleted > 0 {
 				log.Printf("Downloaded %d bytes (metadata not fully resolved yet)", bytesCompleted)
 			} else if t.Length() > 0 {
-				log.Printf("%.2f%% complete. Downloaded: %s / %s. Peers: %d, Uploaded: %s",
+				log.Printf("%.2f%% complete. Downloaded: %s / %s. Down: %s/s, Up: %s/s. Peers: %d",
 					percent,
 					utils.FormatBytes(bytesCompleted),
 					utils.FormatBytes(t.Length()),
+					utils.FormatBytes(dlSpeed),
+					utils.FormatBytes(ulSpeed),
 					stats.ActivePeers,
-					utils.FormatBytes(bytesUploaded),
 				)
 			}
 			time.Sleep(2 * time.Second)
