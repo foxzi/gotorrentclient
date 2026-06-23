@@ -14,8 +14,12 @@ This is a command-line torrent client built in Go using the anacrolix/torrent li
 - Set download and upload speed limits
 - Configure seeding options (ratio, enable/disable)
 - Support for HTTP, HTTPS, and SOCKS5 proxies
-- Real-time download progress display
+- Real-time download progress with speed display (CLI)
 - Graceful shutdown with CTRL+C
+- Web UI daemon for managing multiple torrents simultaneously
+- Pause, Resume, and Verify per torrent in the web UI
+- Persistent state — torrents are restored after restart
+- REST JSON API for all torrent operations
 
 ### Installation
 
@@ -108,8 +112,11 @@ A built-in web daemon manages multiple torrents at once from a browser.
 # Open http://localhost:8080
 ```
 
+Omitting credentials starts the server without authentication (anyone on the network can access it).
+
 Credentials can also be set via `GTC_USERNAME` / `GTC_PASSWORD`, and the
-listen address via `GTC_LISTEN`. See [docs/web-en.md](docs/web-en.md) for details.
+listen address via `GTC_LISTEN`. See [docs/web-en.md](docs/web-en.md) for full details,
+including the REST API reference.
 
 <a name="russian"></a>
 ## Русская Документация
@@ -123,8 +130,12 @@ listen address via `GTC_LISTEN`. See [docs/web-en.md](docs/web-en.md) for detail
 - Установка ограничения скорости загрузки и раздачи
 - Настройка параметров сидирования (коэффициент раздачи, включение/выключение)
 - Поддержка HTTP, HTTPS и SOCKS5 прокси
-- Отображение прогресса загрузки в реальном времени
+- Отображение прогресса загрузки со скоростью в реальном времени (CLI)
 - Корректное завершение работы по CTRL+C
+- Веб-демон для одновременного управления несколькими торрентами
+- Пауза, возобновление и верификация торрентов в веб-интерфейсе
+- Сохранение состояния — торренты восстанавливаются после перезапуска
+- REST JSON API для всех операций с торрентами
 
 ### Установка
 
@@ -216,5 +227,7 @@ go build -o gotorrentclient main.go
 # Откройте http://localhost:8080
 ```
 
+Если не указать учётные данные, сервер запустится без аутентификации (интерфейс доступен всем в сети).
+
 Учётные данные также можно задать через `GTC_USERNAME` / `GTC_PASSWORD`,
-а адрес прослушивания — через `GTC_LISTEN`. Подробнее: [docs/web-ru.md](docs/web-ru.md).
+а адрес прослушивания — через `GTC_LISTEN`. Подробнее, включая справочник REST API: [docs/web-ru.md](docs/web-ru.md).
