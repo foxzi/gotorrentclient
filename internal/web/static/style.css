@@ -16,6 +16,8 @@
   --bg-btn-logout-hover:#4b5563;
   --bg-btn-drop:        #dc2626;
   --bg-btn-drop-hover:  #b91c1c;
+  --bg-btn-warn:        #ca8a04;
+  --bg-btn-warn-hover:  #a16207;
   --shadow:             rgba(0,0,0,.1);
 }
 
@@ -37,6 +39,8 @@
   --bg-btn-logout-hover:#374151;
   --bg-btn-drop:        #dc2626;
   --bg-btn-drop-hover:  #b91c1c;
+  --bg-btn-warn:        #ca8a04;
+  --bg-btn-warn-hover:  #a16207;
   --shadow:             rgba(0,0,0,.4);
 }
 
@@ -83,12 +87,16 @@ button {
   background: var(--bg-btn); color: #fff; cursor: pointer; font-size: .9rem;
 }
 button:hover { background: var(--bg-btn-hover); }
+button:disabled { opacity: .65; cursor: not-allowed; }
 
 .btn-logout { background: var(--bg-btn-logout); }
 .btn-logout:hover { background: var(--bg-btn-logout-hover); }
 
 .btn-drop { background: var(--bg-btn-drop); padding: .3rem .7rem; }
 .btn-drop:hover { background: var(--bg-btn-drop-hover); }
+.btn-pause, .btn-verify { background: var(--bg-btn-warn); padding: .3rem .7rem; }
+.btn-pause:hover, .btn-verify:hover { background: var(--bg-btn-warn-hover); }
+.btn-resume { padding: .3rem .7rem; }
 
 .btn-theme { background: var(--bg-btn-logout); font-size: .85rem; padding: .4rem .8rem; }
 .btn-theme:hover { background: var(--bg-btn-logout-hover); }
@@ -106,9 +114,11 @@ button:hover { background: var(--bg-btn-hover); }
   color: var(--color-input);
 }
 .file-label { display: flex; align-items: center; gap: .4rem; font-size: .9rem; cursor: pointer; }
+.add-status { color: var(--color-error); font-size: .85rem; min-height: 1.2em; }
 
 table { width: 100%; border-collapse: collapse; font-size: .9rem; }
 th, td { text-align: left; padding: .5rem .7rem; border-bottom: 1px solid var(--color-border-table); }
 th { background: var(--bg-th); font-weight: 600; }
 tr.done td { color: var(--color-done); }
 .empty { text-align: center; color: var(--color-empty); padding: 1.5rem; }
+.row-actions { display: flex; flex-wrap: wrap; gap: .35rem; }

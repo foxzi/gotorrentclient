@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="2">
 <title>gotorrentclient</title>
 <link rel="stylesheet" href="/static/style.css">
 <script>
@@ -25,13 +24,14 @@
     </div>
   </div>
 
-  <form method="POST" action="/add" enctype="multipart/form-data" class="add-form">
+  <form method="POST" action="/add" enctype="multipart/form-data" class="add-form" id="add-form">
     <input type="text" name="magnet" placeholder="Magnet link..." class="magnet-input">
     <label class="file-label">
-      <input type="file" name="torrentfile" accept=".torrent">
-      .torrent file
+      <input type="file" name="torrentfile" accept=".torrent" multiple>
+      .torrent files
     </label>
-    <button type="submit">Add</button>
+    <button type="submit" id="add-btn">Add</button>
+    <span id="add-status" class="add-status"></span>
   </form>
 
   <table>
@@ -40,19 +40,25 @@
         <th>Name</th>
         <th>Progress</th>
         <th>Downloaded</th>
+        <th>Down</th>
+        <th>Up</th>
         <th>Peers</th>
         <th>Uploaded</th>
+        <th>Status</th>
         <th></th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="torrent-rows">
     {{range .Torrents}}
       <tr{{if .Done}} class="done"{{end}}>
         <td>{{.Name}}</td>
         <td>{{.Percent}}%</td>
         <td>{{.Completed}} / {{.Length}}</td>
+        <td>{{.DownloadSpeed}}</td>
+        <td>{{.UploadSpeed}}</td>
         <td>{{.Peers}}</td>
         <td>{{.Uploaded}}</td>
+        <td>{{.Status}}</td>
         <td>
           <form method="POST" action="/drop">
             <input type="hidden" name="id" value="{{.ID}}">
@@ -61,7 +67,7 @@
         </td>
       </tr>
     {{else}}
-      <tr><td colspan="6" class="empty">No torrents</td></tr>
+      <tr><td colspan="9" class="empty">No torrents</td></tr>
     {{end}}
     </tbody>
   </table>
@@ -77,6 +83,116 @@
     localStorage.setItem('theme',next);
     btn.textContent=label(next);
   };
+})();
+(function(){
+  var form=document.getElementById('add-form');
+  var rows=document.getElementById('torrent-rows');
+  var addBtn=document.getElementById('add-btn');
+  var status=document.getElementById('add-status');
+  var magnet=form.elements.magnet;
+  var torrentfile=form.elements.torrentfile;
+  function escapeHTML(value){
+    return String(value).replace(/[&<>"']/g,function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+  function render(torrents){
+    if (!torrents || torrents.length===0) {
+      rows.innerHTML='<tr><td colspan="9" class="empty">No torrents</td></tr>';
+      return;
+    }
+    rows.innerHTML=torrents.map(function(t){
+      var transferButton=t.paused
+        ? '<button type="button" class="btn-resume" data-id="'+escapeHTML(t.id)+'">Resume</button>'
+        : '<button type="button" class="btn-pause" data-id="'+escapeHTML(t.id)+'">Pause</button>';
+      return '<tr'+(t.done?' class="done"':'')+'>'+
+        '<td>'+escapeHTML(t.name)+'</td>'+
+        '<td>'+escapeHTML(t.percent)+'%</td>'+
+        '<td>'+escapeHTML(t.completed)+' / '+escapeHTML(t.length)+'</td>'+
+        '<td>'+escapeHTML(t.download_speed)+'</td>'+
+        '<td>'+escapeHTML(t.upload_speed)+'</td>'+
+        '<td>'+escapeHTML(t.peers)+'</td>'+
+        '<td>'+escapeHTML(t.uploaded)+'</td>'+
+        '<td>'+escapeHTML(t.status)+'</td>'+
+        '<td><div class="row-actions">'+
+          transferButton+
+          '<button type="button" class="btn-verify" data-id="'+escapeHTML(t.id)+'">Verify</button>'+
+          '<button type="button" class="btn-drop" data-id="'+escapeHTML(t.id)+'">Drop</button>'+
+        '</div></td>'+
+        '</tr>';
+    }).join('');
+  }
+  function handleLoginRedirect(response){
+    if (response.redirected && response.url.indexOf('/login')!==-1) {
+      window.location=response.url;
+      return true;
+    }
+    return false;
+  }
+  function loadTorrents(){
+    fetch('/api/torrents').then(function(response){
+      if (handleLoginRedirect(response)) return null;
+      if (!response.ok) throw new Error('Failed to load torrents');
+      return response.json();
+    }).then(function(data){
+      if (data) render(data.torrents);
+    }).catch(function(err){
+      status.textContent=err.message;
+    });
+  }
+  form.addEventListener('submit',function(event){
+    event.preventDefault();
+    addBtn.disabled=true;
+    status.textContent='Adding...';
+    fetch('/api/add',{method:'POST',body:new FormData(form)}).then(function(response){
+      if (handleLoginRedirect(response)) return null;
+      return response.json().then(function(data){
+        if (!response.ok) throw new Error(data.error || 'Failed to add torrent');
+        return data;
+      });
+    }).then(function(data){
+      if (!data) return;
+      magnet.value='';
+      torrentfile.value='';
+      status.textContent='';
+      render(data.torrents);
+    }).catch(function(err){
+      status.textContent=err.message;
+    }).finally(function(){
+      addBtn.disabled=false;
+    });
+  });
+  function postTorrentAction(path,id){
+    var body=new URLSearchParams();
+    body.set('id',id);
+    return fetch(path,{method:'POST',body:body}).then(function(response){
+      if (handleLoginRedirect(response)) return null;
+      return response.json().then(function(data){
+        if (!response.ok) throw new Error(data.error || 'Torrent action failed');
+        return data;
+      });
+    });
+  }
+  rows.addEventListener('click',function(event){
+    var target=event.target;
+    var path='';
+    if (target.matches('.btn-pause')) path='/api/pause';
+    if (target.matches('.btn-resume')) path='/api/resume';
+    if (target.matches('.btn-verify')) path='/api/verify';
+    if (target.matches('.btn-drop')) path='/api/drop';
+    if (!path) return;
+    target.disabled=true;
+    postTorrentAction(path,target.dataset.id).then(function(data){
+      if (data) render(data.torrents);
+      status.textContent='';
+    }).catch(function(err){
+      status.textContent=err.message;
+    }).finally(function(){
+      target.disabled=false;
+    });
+  });
+  loadTorrents();
+  setInterval(loadTorrents,2000);
 })();
 </script>
 </body>
