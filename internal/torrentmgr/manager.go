@@ -409,10 +409,11 @@ func (m *Manager) List() []TorrentInfo {
 					info.CheckingPieces += run.Length
 				}
 			}
-			// Per-piece hashing happens continuously during download and would
-			// otherwise keep the torrent stuck in "Checking" on slow devices.
-			// Only report a full verification when most pieces are being checked.
-			info.Checking = info.CheckingPieces*2 > info.TotalPieces
+			// A full verification hashes pieces while no data is being
+			// downloaded. Incidental per-piece hashing during an active
+			// download should not flip the status to Checking, so only report
+			// Checking when pieces are being hashed and nothing is downloading.
+			info.Checking = info.CheckingPieces > 0 && info.DownloadSpeed == 0
 		}
 		info.Status = torrentStatus(info)
 		infos = append(infos, info)
