@@ -36,6 +36,11 @@ cd gotorrentclient
 go build -o gotorrentclient main.go
 ```
 
+#### System package (deb / rpm)
+Install as a systemd service with a config in `/etc/gotorrentclient`.
+See [docs/packaging-en.md](docs/packaging-en.md) for building and installing
+`.deb` / `.rpm` packages.
+
 ### Usage
 
 ```bash
@@ -151,6 +156,11 @@ cd gotorrentclient
 # Сборка исполняемого файла
 go build -o gotorrentclient main.go
 ```
+
+#### Системный пакет (deb / rpm)
+Установка как systemd-сервис с конфигом в `/etc/gotorrentclient`.
+См. [docs/packaging-ru.md](docs/packaging-ru.md) — как собрать и установить
+пакеты `.deb` / `.rpm`.
 
 ### Использование
 

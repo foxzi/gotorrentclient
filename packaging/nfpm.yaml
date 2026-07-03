@@ -1,0 +1,51 @@
+# nfpm configuration for building .deb and .rpm packages.
+# https://nfpm.goreleaser.com/
+#
+# Environment variables (set by build-packages.sh):
+#   VERSION - package version (e.g. 0.2.1)
+#   ARCH    - Go arch: amd64 or arm64 (nfpm maps it per packager)
+#
+# The binary is expected at build/gotorrentclient (the build script places
+# the arch-specific binary there before invoking nfpm). nfpm does not expand
+# environment variables inside contents.src, so this path is a literal.
+
+name: gotorrentclient
+arch: ${ARCH}
+version: ${VERSION}
+version_schema: none
+release: 1
+section: net
+priority: optional
+maintainer: Sergei Vorontsov <piligrim@applgiants.com>
+description: |
+  BitTorrent client with a web UI and CLI.
+  Runs as a systemd service with configuration in /etc/gotorrentclient.
+homepage: https://github.com/piligrim/gotorrentclient
+license: MIT
+
+contents:
+  - src: build/gotorrentclient
+    dst: /usr/bin/gotorrentclient
+    file_info:
+      mode: 0755
+
+  - src: packaging/systemd/gotorrentclient.service
+    dst: /lib/systemd/system/gotorrentclient.service
+    file_info:
+      mode: 0644
+
+  - src: packaging/config/config.yaml
+    dst: /etc/gotorrentclient/config.yaml
+    type: config|noreplace
+    file_info:
+      mode: 0640
+
+  - dst: /var/lib/gotorrentclient
+    type: dir
+    file_info:
+      mode: 0750
+
+scripts:
+  postinstall: packaging/scripts/postinstall.sh
+  preremove: packaging/scripts/preremove.sh
+  postremove: packaging/scripts/postremove.sh

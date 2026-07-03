@@ -1,0 +1,37 @@
+# gotorrentclient - system service configuration
+# Installed to /etc/gotorrentclient/config.yaml
+# This file is preserved across package upgrades.
+#
+# Precedence (lowest to highest):
+#   built-in defaults -> this file -> env variables -> command-line flags
+
+# Address the web UI listens on.
+listen: ":8080"
+
+# Web UI credentials. Leave empty to run without authentication
+# (NOT recommended for network-exposed instances).
+username: ""
+password: ""
+
+engine:
+  # Directory where downloaded files and torrent state are stored.
+  # Must be writable by the gotorrentclient service user.
+  download_dir: "/var/lib/gotorrentclient/downloads"
+
+  # Maximum number of peer connections per torrent.
+  max_peers: 50
+
+  # Maximum download speed in Mbps. 0 means unlimited.
+  download_rate_mbps: 0
+
+  # Maximum upload speed in Mbps. 0 means unlimited.
+  upload_rate_mbps: 0
+
+  # Whether to keep seeding after a download finishes.
+  enable_seeding: false
+
+  # Stop seeding when upload/download ratio reaches this value. 0 means unlimited.
+  seed_ratio: 0
+
+  # Optional proxy URL. Supported schemes: http, https, socks5.
+  proxy_url: ""
