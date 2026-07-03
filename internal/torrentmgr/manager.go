@@ -87,7 +87,7 @@ func (m *Manager) AddMagnet(uri string) error {
 	if err := m.persistMagnet(uri); err != nil {
 		return err
 	}
-	m.startWhenReady(t)
+	m.startWhenReady(t, true)
 	return nil
 }
 
@@ -112,16 +112,21 @@ func (m *Manager) addMetaInfo(mi *metainfo.MetaInfo, persist bool) error {
 			return err
 		}
 	}
-	m.startWhenReady(t)
+	m.startWhenReady(t, persist)
 	return nil
 }
 
 // startWhenReady waits for metadata then begins downloading all pieces.
-func (m *Manager) startWhenReady(t *torrent.Torrent) {
+// verify re-hashes existing on-disk data. It is only needed when a torrent is
+// first added, since the files may already be present. On restart the persisted
+// piece-completion database is trusted, so a full re-check is skipped.
+func (m *Manager) startWhenReady(t *torrent.Torrent, verify bool) {
 	go func() {
 		<-t.GotInfo()
 		m.persistTorrentMetaInfo(t)
-		t.VerifyData()
+		if verify {
+			t.VerifyData()
+		}
 		if m.isPaused(t.InfoHash().HexString()) {
 			t.DisallowDataDownload()
 			t.DisallowDataUpload()
@@ -179,7 +184,7 @@ func (m *Manager) restorePersisted() {
 		t, err := m.client.AddMagnet(uri)
 		m.mu.Unlock()
 		if err == nil {
-			m.startWhenReady(t)
+			m.startWhenReady(t, false)
 		}
 	}
 }
