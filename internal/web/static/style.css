@@ -92,11 +92,15 @@ button:disabled { opacity: .65; cursor: not-allowed; }
 .btn-logout { background: var(--bg-btn-logout); }
 .btn-logout:hover { background: var(--bg-btn-logout-hover); }
 
-.btn-drop { background: var(--bg-btn-drop); padding: .3rem .7rem; }
+.btn-drop, .btn-pause, .btn-verify, .btn-resume {
+  padding: 0; width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-drop svg, .btn-pause svg, .btn-verify svg, .btn-resume svg { width: 16px; height: 16px; display: block; }
+.btn-drop { background: var(--bg-btn-drop); }
 .btn-drop:hover { background: var(--bg-btn-drop-hover); }
-.btn-pause, .btn-verify { background: var(--bg-btn-warn); padding: .3rem .7rem; }
+.btn-pause, .btn-verify { background: var(--bg-btn-warn); }
 .btn-pause:hover, .btn-verify:hover { background: var(--bg-btn-warn-hover); }
-.btn-resume { padding: .3rem .7rem; }
 
 .btn-theme { background: var(--bg-btn-logout); font-size: .85rem; padding: .4rem .8rem; }
 .btn-theme:hover { background: var(--bg-btn-logout-hover); }

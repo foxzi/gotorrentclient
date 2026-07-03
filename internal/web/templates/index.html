@@ -62,7 +62,9 @@
         <td>
           <form method="POST" action="/drop">
             <input type="hidden" name="id" value="{{.ID}}">
-            <button type="submit" class="btn-drop">Drop</button>
+            <button type="submit" class="btn-drop" title="Drop" aria-label="Drop">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+            </button>
           </form>
         </td>
       </tr>
@@ -96,6 +98,12 @@
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
     });
   }
+  var icons={
+    pause:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>',
+    resume:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
+    verify:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>',
+    drop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'
+  };
   function render(torrents){
     if (!torrents || torrents.length===0) {
       rows.innerHTML='<tr><td colspan="9" class="empty">No torrents</td></tr>';
@@ -103,8 +111,8 @@
     }
     rows.innerHTML=torrents.map(function(t){
       var transferButton=t.paused
-        ? '<button type="button" class="btn-resume" data-id="'+escapeHTML(t.id)+'">Resume</button>'
-        : '<button type="button" class="btn-pause" data-id="'+escapeHTML(t.id)+'">Pause</button>';
+        ? '<button type="button" class="btn-resume" title="Resume" aria-label="Resume" data-id="'+escapeHTML(t.id)+'">'+icons.resume+'</button>'
+        : '<button type="button" class="btn-pause" title="Pause" aria-label="Pause" data-id="'+escapeHTML(t.id)+'">'+icons.pause+'</button>';
       return '<tr'+(t.done?' class="done"':'')+'>'+
         '<td>'+escapeHTML(t.name)+'</td>'+
         '<td>'+escapeHTML(t.percent)+'%</td>'+
@@ -116,8 +124,8 @@
         '<td>'+escapeHTML(t.status)+(t.checking_pieces>0?' <span class="checking-count">'+escapeHTML(t.checking_pieces)+'/'+escapeHTML(t.total_pieces)+'</span>':'')+'</td>'+
         '<td><div class="row-actions">'+
           transferButton+
-          '<button type="button" class="btn-verify" data-id="'+escapeHTML(t.id)+'">Verify</button>'+
-          '<button type="button" class="btn-drop" data-id="'+escapeHTML(t.id)+'">Drop</button>'+
+          '<button type="button" class="btn-verify" title="Verify" aria-label="Verify" data-id="'+escapeHTML(t.id)+'">'+icons.verify+'</button>'+
+          '<button type="button" class="btn-drop" title="Drop" aria-label="Drop" data-id="'+escapeHTML(t.id)+'">'+icons.drop+'</button>'+
         '</div></td>'+
         '</tr>';
     }).join('');
@@ -174,7 +182,8 @@
     });
   }
   rows.addEventListener('click',function(event){
-    var target=event.target;
+    var target=event.target.closest('button');
+    if (!target) return;
     var path='';
     if (target.matches('.btn-pause')) path='/api/pause';
     if (target.matches('.btn-resume')) path='/api/resume';
