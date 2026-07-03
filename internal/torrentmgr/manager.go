@@ -39,20 +39,22 @@ type Manager struct {
 
 // TorrentInfo is a snapshot of a single torrent's state.
 type TorrentInfo struct {
-	ID            string
-	Name          string
-	Completed     int64
-	Length        int64
-	Percent       float64
-	Peers         int
-	Uploaded      int64
-	GotInfo       bool
-	Done          bool
-	Paused        bool
-	Checking      bool
-	Status        string
-	DownloadSpeed int64
-	UploadSpeed   int64
+	ID             string
+	Name           string
+	Completed      int64
+	Length         int64
+	Percent        float64
+	Peers          int
+	Uploaded       int64
+	GotInfo        bool
+	Done           bool
+	Paused         bool
+	Checking       bool
+	CheckingPieces int
+	TotalPieces    int
+	Status         string
+	DownloadSpeed  int64
+	UploadSpeed    int64
 }
 
 // New creates a Manager with an embedded torrent.Client.
@@ -401,12 +403,16 @@ func (m *Manager) List() []TorrentInfo {
 			info.Peers = stats.ActivePeers
 			info.Uploaded = stats.BytesWrittenData.Int64()
 			info.DownloadSpeed, info.UploadSpeed = m.calcSpeed(id, info.Completed, info.Uploaded)
+			info.TotalPieces = t.NumPieces()
 			for _, run := range t.PieceStateRuns() {
 				if run.Checking || run.Hashing || run.QueuedForHash {
-					info.Checking = true
-					break
+					info.CheckingPieces += run.Length
 				}
 			}
+			// Per-piece hashing happens continuously during download and would
+			// otherwise keep the torrent stuck in "Checking" on slow devices.
+			// Only report a full verification when most pieces are being checked.
+			info.Checking = info.CheckingPieces*2 > info.TotalPieces
 		}
 		info.Status = torrentStatus(info)
 		infos = append(infos, info)

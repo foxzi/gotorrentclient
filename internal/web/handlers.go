@@ -15,19 +15,21 @@ import (
 
 // torrentView is the view-model for a single torrent row.
 type torrentView struct {
-	ID            string  `json:"id"`
-	Name          string  `json:"name"`
-	Percent       float64 `json:"percent"`
-	Completed     string  `json:"completed"`
-	Length        string  `json:"length"`
-	Peers         int     `json:"peers"`
-	Uploaded      string  `json:"uploaded"`
-	Done          bool    `json:"done"`
-	Paused        bool    `json:"paused"`
-	Checking      bool    `json:"checking"`
-	Status        string  `json:"status"`
-	DownloadSpeed string  `json:"download_speed"`
-	UploadSpeed   string  `json:"upload_speed"`
+	ID             string  `json:"id"`
+	Name           string  `json:"name"`
+	Percent        float64 `json:"percent"`
+	Completed      string  `json:"completed"`
+	Length         string  `json:"length"`
+	Peers          int     `json:"peers"`
+	Uploaded       string  `json:"uploaded"`
+	Done           bool    `json:"done"`
+	Paused         bool    `json:"paused"`
+	Checking       bool    `json:"checking"`
+	CheckingPieces int     `json:"checking_pieces"`
+	TotalPieces    int     `json:"total_pieces"`
+	Status         string  `json:"status"`
+	DownloadSpeed  string  `json:"download_speed"`
+	UploadSpeed    string  `json:"upload_speed"`
 }
 
 func (s *Server) handleLoginGet(w http.ResponseWriter, r *http.Request) {
@@ -86,19 +88,21 @@ func (s *Server) torrentViews() []torrentView {
 	views := make([]torrentView, 0, len(list))
 	for _, t := range list {
 		views = append(views, torrentView{
-			ID:            t.ID,
-			Name:          t.Name,
-			Percent:       math.Round(t.Percent*10) / 10,
-			Completed:     utils.FormatBytes(t.Completed),
-			Length:        utils.FormatBytes(t.Length),
-			Peers:         t.Peers,
-			Uploaded:      utils.FormatBytes(t.Uploaded),
-			Done:          t.Done,
-			Paused:        t.Paused,
-			Checking:      t.Checking,
-			Status:        t.Status,
-			DownloadSpeed: utils.FormatBytes(t.DownloadSpeed) + "/s",
-			UploadSpeed:   utils.FormatBytes(t.UploadSpeed) + "/s",
+			ID:             t.ID,
+			Name:           t.Name,
+			Percent:        math.Round(t.Percent*10) / 10,
+			Completed:      utils.FormatBytes(t.Completed),
+			Length:         utils.FormatBytes(t.Length),
+			Peers:          t.Peers,
+			Uploaded:       utils.FormatBytes(t.Uploaded),
+			Done:           t.Done,
+			Paused:         t.Paused,
+			Checking:       t.Checking,
+			CheckingPieces: t.CheckingPieces,
+			TotalPieces:    t.TotalPieces,
+			Status:         t.Status,
+			DownloadSpeed:  utils.FormatBytes(t.DownloadSpeed) + "/s",
+			UploadSpeed:    utils.FormatBytes(t.UploadSpeed) + "/s",
 		})
 	}
 	return views

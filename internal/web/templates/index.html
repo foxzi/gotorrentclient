@@ -58,7 +58,7 @@
         <td>{{.UploadSpeed}}</td>
         <td>{{.Peers}}</td>
         <td>{{.Uploaded}}</td>
-        <td>{{.Status}}</td>
+        <td>{{.Status}}{{if gt .CheckingPieces 0}} <span class="checking-count">{{.CheckingPieces}}/{{.TotalPieces}}</span>{{end}}</td>
         <td>
           <form method="POST" action="/drop">
             <input type="hidden" name="id" value="{{.ID}}">
@@ -113,7 +113,7 @@
         '<td>'+escapeHTML(t.upload_speed)+'</td>'+
         '<td>'+escapeHTML(t.peers)+'</td>'+
         '<td>'+escapeHTML(t.uploaded)+'</td>'+
-        '<td>'+escapeHTML(t.status)+'</td>'+
+        '<td>'+escapeHTML(t.status)+(t.checking_pieces>0?' <span class="checking-count">'+escapeHTML(t.checking_pieces)+'/'+escapeHTML(t.total_pieces)+'</span>':'')+'</td>'+
         '<td><div class="row-actions">'+
           transferButton+
           '<button type="button" class="btn-verify" data-id="'+escapeHTML(t.id)+'">Verify</button>'+

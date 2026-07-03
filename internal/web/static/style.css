@@ -120,5 +120,6 @@ table { width: 100%; border-collapse: collapse; font-size: .9rem; }
 th, td { text-align: left; padding: .5rem .7rem; border-bottom: 1px solid var(--color-border-table); }
 th { background: var(--bg-th); font-weight: 600; }
 tr.done td { color: var(--color-done); }
+.checking-count { font-size: .8rem; opacity: .65; white-space: nowrap; }
 .empty { text-align: center; color: var(--color-empty); padding: 1.5rem; }
 .row-actions { display: flex; flex-wrap: wrap; gap: .35rem; }
