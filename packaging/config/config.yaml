@@ -16,6 +16,14 @@ password: ""
 engine:
   # Directory where downloaded files and torrent state are stored.
   # Must be writable by the gotorrentclient service user.
+  #
+  # NOTE: the systemd unit uses ProtectSystem=strict and only allows writes
+  # to /var/lib/gotorrentclient. If you point this to another location
+  # (e.g. /mnt/tank/download), you MUST whitelist it for the service:
+  #   sudo systemctl edit gotorrentclient
+  #   [Service]
+  #   ReadWritePaths=/mnt/tank/download
+  #   sudo systemctl restart gotorrentclient
   download_dir: "/var/lib/gotorrentclient/downloads"
 
   # Maximum number of peer connections per torrent.

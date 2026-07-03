@@ -69,6 +69,41 @@ sudo systemctl restart gotorrentclient
 > Внимание: если `username` и `password` пусты, веб-интерфейс открыт для всех.
 > Задайте учётные данные перед публикацией в сеть.
 
+## Свой путь для загрузок
+
+Unit-файл для безопасности использует `ProtectSystem=strict`: сервису доступен
+на запись только каталог `/var/lib/gotorrentclient`. Вся остальная файловая
+система для него доступна только на чтение.
+
+Если вы указали в `download_dir` другой путь (например `/mnt/tank/download`),
+сервис не сможет туда писать и упадёт с ошибкой `read-only file system`. Нужно
+явно разрешить запись в этот путь через drop-in override:
+
+```bash
+sudo systemctl edit gotorrentclient
+```
+
+Добавьте в открывшийся файл:
+
+```ini
+[Service]
+ReadWritePaths=/mnt/tank/download
+```
+
+Затем:
+
+```bash
+sudo systemctl restart gotorrentclient
+```
+
+Override хранится в `/etc/systemd/system/gotorrentclient.service.d/` и
+сохраняется при обновлении пакета. Убедитесь, что сам каталог существует и
+доступен на запись пользователю `gotorrentclient`:
+
+```bash
+sudo chown gotorrentclient:gotorrentclient /mnt/tank/download
+```
+
 ## Обновление
 
 Установите новый пакет поверх старого — файл `/etc/gotorrentclient/config.yaml`

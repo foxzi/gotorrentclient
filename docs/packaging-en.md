@@ -69,6 +69,40 @@ Once running, the web UI is available on the port from `listen` (default `:8080`
 > Warning: if `username` and `password` are empty, the web UI is open to
 > everyone. Set credentials before exposing it to a network.
 
+## Custom download path
+
+For security the unit uses `ProtectSystem=strict`: the service can only write to
+`/var/lib/gotorrentclient`. The rest of the filesystem is read-only for it.
+
+If you set `download_dir` to a different location (e.g. `/mnt/tank/download`),
+the service cannot write there and fails with a `read-only file system` error.
+You must explicitly allow writes to that path via a drop-in override:
+
+```bash
+sudo systemctl edit gotorrentclient
+```
+
+Add to the file that opens:
+
+```ini
+[Service]
+ReadWritePaths=/mnt/tank/download
+```
+
+Then:
+
+```bash
+sudo systemctl restart gotorrentclient
+```
+
+The override is stored in `/etc/systemd/system/gotorrentclient.service.d/` and
+survives package upgrades. Make sure the directory exists and is writable by the
+`gotorrentclient` user:
+
+```bash
+sudo chown gotorrentclient:gotorrentclient /mnt/tank/download
+```
+
 ## Upgrading
 
 Install the new package over the old one — `/etc/gotorrentclient/config.yaml`
