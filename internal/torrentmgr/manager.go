@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -423,6 +424,14 @@ func (m *Manager) List() []TorrentInfo {
 		info.Status = torrentStatus(info)
 		infos = append(infos, info)
 	}
+	// client.Torrents() iterates a map, so the order is non-deterministic.
+	// Sort by a stable key so the web UI does not reorder rows on each poll.
+	sort.Slice(infos, func(i, j int) bool {
+		if infos[i].Name != infos[j].Name {
+			return infos[i].Name < infos[j].Name
+		}
+		return infos[i].ID < infos[j].ID
+	})
 	return infos
 }
 
