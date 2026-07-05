@@ -51,7 +51,7 @@
     <tbody id="torrent-rows">
     {{range .Torrents}}
       <tr{{if .Done}} class="done"{{end}}>
-        <td>{{.Name}}</td>
+        <td title="{{.Name}}">{{.Name}}</td>
         <td>{{.Percent}}%</td>
         <td>{{.Completed}} / {{.Length}}</td>
         <td>{{.DownloadSpeed}}</td>
@@ -114,7 +114,7 @@
         ? '<button type="button" class="btn-resume" title="Resume" aria-label="Resume" data-id="'+escapeHTML(t.id)+'">'+icons.resume+'</button>'
         : '<button type="button" class="btn-pause" title="Pause" aria-label="Pause" data-id="'+escapeHTML(t.id)+'">'+icons.pause+'</button>';
       return '<tr'+(t.done?' class="done"':'')+'>'+
-        '<td>'+escapeHTML(t.name)+'</td>'+
+        '<td title="'+escapeHTML(t.name)+'">'+escapeHTML(t.name)+'</td>'+
         '<td>'+escapeHTML(t.percent)+'%</td>'+
         '<td>'+escapeHTML(t.completed)+' / '+escapeHTML(t.length)+'</td>'+
         '<td>'+escapeHTML(t.download_speed)+'</td>'+

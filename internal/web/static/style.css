@@ -120,10 +120,30 @@ button:disabled { opacity: .65; cursor: not-allowed; }
 .file-label { display: flex; align-items: center; gap: .4rem; font-size: .9rem; cursor: pointer; }
 .add-status { color: var(--color-error); font-size: .85rem; min-height: 1.2em; }
 
-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-th, td { text-align: left; padding: .5rem .7rem; border-bottom: 1px solid var(--color-border-table); }
+table {
+  width: 100%; border-collapse: collapse; font-size: .9rem;
+  /* Fixed layout keeps column widths stable while speed/peers values change,
+     so rows do not jitter and reflow on every poll. */
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+th, td {
+  text-align: left; padding: .5rem .7rem;
+  border-bottom: 1px solid var(--color-border-table);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 th { background: var(--bg-th); font-weight: 600; }
+/* Column widths: Name (1) takes the remaining space, the rest are fixed
+   so numeric values changing length never resize the table. */
+th:nth-child(2) { width: 4.5rem; }
+th:nth-child(3) { width: 8.5rem; }
+th:nth-child(4) { width: 5.5rem; }
+th:nth-child(5) { width: 5.5rem; }
+th:nth-child(6) { width: 3.5rem; }
+th:nth-child(7) { width: 5.5rem; }
+th:nth-child(8) { width: 7rem; }
+th:nth-child(9) { width: 6.5rem; }
 tr.done td { color: var(--color-done); }
 .checking-count { font-size: .8rem; opacity: .65; white-space: nowrap; }
 .empty { text-align: center; color: var(--color-empty); padding: 1.5rem; }
-.row-actions { display: flex; flex-wrap: wrap; gap: .35rem; }
+.row-actions { display: flex; flex-wrap: nowrap; gap: .35rem; }
