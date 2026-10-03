@@ -77,7 +77,10 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	data := struct{ Torrents []torrentView }{Torrents: s.torrentViews()}
+	data := struct {
+		Torrents    []torrentView
+		AuthEnabled bool
+	}{Torrents: s.torrentViews(), AuthEnabled: s.authEnabled()}
 	if err := s.tmpl.ExecuteTemplate(w, "index.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

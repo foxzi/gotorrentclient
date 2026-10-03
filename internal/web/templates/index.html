@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
 <title>gotorrentclient</title>
 <link rel="stylesheet" href="/static/style.css">
 <script>
@@ -14,26 +17,35 @@
 </head>
 <body>
 <div class="container">
-  <div class="header">
+  <header class="header">
     <h1>gotorrentclient</h1>
     <div class="header-controls">
-      <button type="button" id="theme-btn" class="btn-theme"></button>
-      <form method="POST" action="/logout" style="display:inline">
+      <button type="button" id="theme-btn" class="btn-icon btn-theme" aria-label="Toggle theme" title="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      {{if .AuthEnabled}}
+      <form method="POST" action="/logout">
         <button type="submit" class="btn-logout">Logout</button>
       </form>
+      {{end}}
     </div>
-  </div>
+  </header>
 
   <form method="POST" action="/add" enctype="multipart/form-data" class="add-form" id="add-form">
-    <input type="text" name="magnet" placeholder="Magnet link..." class="magnet-input">
-    <label class="file-label">
-      <input type="file" name="torrentfile" accept=".torrent" multiple>
-      .torrent files
-    </label>
-    <button type="submit" id="add-btn">Add</button>
-    <span id="add-status" class="add-status"></span>
+    <input type="text" name="magnet" placeholder="Magnet link..." class="magnet-input" autocomplete="off" inputmode="url">
+    <div class="add-controls">
+      <label class="file-label">
+        <input type="file" name="torrentfile" accept=".torrent" multiple>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        <span id="file-name">.torrent file</span>
+      </label>
+      <button type="submit" id="add-btn" class="btn-add">Add</button>
+    </div>
   </form>
+  <div id="add-status" class="add-status" role="alert"></div>
 
+  <div class="table-wrap">
   <table>
     <thead>
       <tr>
@@ -45,45 +57,44 @@
         <th>Peers</th>
         <th>Uploaded</th>
         <th>Status</th>
-        <th></th>
+        <th><span class="sr-only">Actions</span></th>
       </tr>
     </thead>
     <tbody id="torrent-rows">
     {{range .Torrents}}
       <tr{{if .Done}} class="done"{{end}}>
-        <td title="{{.Name}}">{{.Name}}</td>
-        <td>{{.Percent}}%</td>
-        <td>{{.Completed}} / {{.Length}}</td>
-        <td>{{.DownloadSpeed}}</td>
-        <td>{{.UploadSpeed}}</td>
-        <td>{{.Peers}}</td>
-        <td>{{.Uploaded}}</td>
-        <td>{{.Status}}{{if gt .CheckingPieces 0}} <span class="checking-count">{{.CheckingPieces}}/{{.TotalPieces}}</span>{{end}}</td>
-        <td>
-          <form method="POST" action="/drop">
-            <input type="hidden" name="id" value="{{.ID}}">
-            <button type="submit" class="btn-drop" title="Drop" aria-label="Drop">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
-            </button>
-          </form>
-        </td>
+        <td class="col-name" title="{{.Name}}">{{.Name}}</td>
+        <td class="col-progress"><div class="progress"><div class="progress-bar" style="width:{{.Percent}}%"></div><span class="progress-text">{{.Percent}}%</span></div></td>
+        <td class="col-size" data-label="Downloaded">{{.Completed}} / {{.Length}}</td>
+        <td class="col-down" data-label="Down">{{.DownloadSpeed}}</td>
+        <td class="col-up" data-label="Up">{{.UploadSpeed}}</td>
+        <td class="col-peers" data-label="Peers">{{.Peers}}</td>
+        <td class="col-uploaded" data-label="Uploaded">{{.Uploaded}}</td>
+        <td class="col-status"><span class="badge badge-{{.Status}}">{{.Status}}</span>{{if gt .CheckingPieces 0}} <span class="checking-count">{{.CheckingPieces}}/{{.TotalPieces}}</span>{{end}}</td>
+        <td class="col-actions"><div class="row-actions">
+          {{if .Paused}}
+          <button type="button" class="btn-icon btn-resume" title="Resume" aria-label="Resume" data-id="{{.ID}}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+          {{else}}
+          <button type="button" class="btn-icon btn-pause" title="Pause" aria-label="Pause" data-id="{{.ID}}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg></button>
+          {{end}}
+          <button type="button" class="btn-icon btn-verify" title="Verify" aria-label="Verify" data-id="{{.ID}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg></button>
+          <button type="button" class="btn-icon btn-drop" title="Drop" aria-label="Drop" data-id="{{.ID}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+        </div></td>
       </tr>
     {{else}}
-      <tr><td colspan="9" class="empty">No torrents</td></tr>
+      <tr class="empty-row"><td colspan="9" class="empty">No torrents</td></tr>
     {{end}}
     </tbody>
   </table>
+  </div>
 </div>
 <script>
 (function(){
   var btn=document.getElementById('theme-btn');
-  function label(t){return t==='dark'?'Theme: Dark':'Theme: Light';}
-  btn.textContent=label(document.documentElement.dataset.theme);
   btn.onclick=function(){
     var next=document.documentElement.dataset.theme==='dark'?'light':'dark';
     document.documentElement.dataset.theme=next;
     localStorage.setItem('theme',next);
-    btn.textContent=label(next);
   };
 })();
 (function(){
@@ -91,12 +102,18 @@
   var rows=document.getElementById('torrent-rows');
   var addBtn=document.getElementById('add-btn');
   var status=document.getElementById('add-status');
+  var fileName=document.getElementById('file-name');
   var magnet=form.elements.magnet;
   var torrentfile=form.elements.torrentfile;
+  var defaultFileLabel=fileName.textContent;
   function escapeHTML(value){
     return String(value).replace(/[&<>"']/g,function(ch){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
     });
+  }
+  function setError(msg){
+    status.textContent=msg||'';
+    status.classList.toggle('visible',!!msg);
   }
   var icons={
     pause:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>',
@@ -104,35 +121,39 @@
     verify:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>',
     drop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'
   };
+  function iconButton(cls,label,id,icon){
+    return '<button type="button" class="btn-icon '+cls+'" title="'+label+'" aria-label="'+label+'" data-id="'+escapeHTML(id)+'">'+icon+'</button>';
+  }
   function render(torrents){
     if (!torrents || torrents.length===0) {
-      rows.innerHTML='<tr><td colspan="9" class="empty">No torrents</td></tr>';
+      rows.innerHTML='<tr class="empty-row"><td colspan="9" class="empty">No torrents</td></tr>';
       return;
     }
     rows.innerHTML=torrents.map(function(t){
+      var pct=escapeHTML(t.percent);
       var transferButton=t.paused
-        ? '<button type="button" class="btn-resume" title="Resume" aria-label="Resume" data-id="'+escapeHTML(t.id)+'">'+icons.resume+'</button>'
-        : '<button type="button" class="btn-pause" title="Pause" aria-label="Pause" data-id="'+escapeHTML(t.id)+'">'+icons.pause+'</button>';
+        ? iconButton('btn-resume','Resume',t.id,icons.resume)
+        : iconButton('btn-pause','Pause',t.id,icons.pause);
       return '<tr'+(t.done?' class="done"':'')+'>'+
-        '<td title="'+escapeHTML(t.name)+'">'+escapeHTML(t.name)+'</td>'+
-        '<td>'+escapeHTML(t.percent)+'%</td>'+
-        '<td>'+escapeHTML(t.completed)+' / '+escapeHTML(t.length)+'</td>'+
-        '<td>'+escapeHTML(t.download_speed)+'</td>'+
-        '<td>'+escapeHTML(t.upload_speed)+'</td>'+
-        '<td>'+escapeHTML(t.peers)+'</td>'+
-        '<td>'+escapeHTML(t.uploaded)+'</td>'+
-        '<td>'+escapeHTML(t.status)+(t.checking_pieces>0?' <span class="checking-count">'+escapeHTML(t.checking_pieces)+'/'+escapeHTML(t.total_pieces)+'</span>':'')+'</td>'+
-        '<td><div class="row-actions">'+
+        '<td class="col-name" title="'+escapeHTML(t.name)+'">'+escapeHTML(t.name)+'</td>'+
+        '<td class="col-progress"><div class="progress"><div class="progress-bar" style="width:'+pct+'%"></div><span class="progress-text">'+pct+'%</span></div></td>'+
+        '<td class="col-size" data-label="Downloaded">'+escapeHTML(t.completed)+' / '+escapeHTML(t.length)+'</td>'+
+        '<td class="col-down" data-label="Down">'+escapeHTML(t.download_speed)+'</td>'+
+        '<td class="col-up" data-label="Up">'+escapeHTML(t.upload_speed)+'</td>'+
+        '<td class="col-peers" data-label="Peers">'+escapeHTML(t.peers)+'</td>'+
+        '<td class="col-uploaded" data-label="Uploaded">'+escapeHTML(t.uploaded)+'</td>'+
+        '<td class="col-status"><span class="badge badge-'+escapeHTML(t.status)+'">'+escapeHTML(t.status)+'</span>'+(t.checking_pieces>0?' <span class="checking-count">'+escapeHTML(t.checking_pieces)+'/'+escapeHTML(t.total_pieces)+'</span>':'')+'</td>'+
+        '<td class="col-actions"><div class="row-actions">'+
           transferButton+
-          '<button type="button" class="btn-verify" title="Verify" aria-label="Verify" data-id="'+escapeHTML(t.id)+'">'+icons.verify+'</button>'+
-          '<button type="button" class="btn-drop" title="Drop" aria-label="Drop" data-id="'+escapeHTML(t.id)+'">'+icons.drop+'</button>'+
+          iconButton('btn-verify','Verify',t.id,icons.verify)+
+          iconButton('btn-drop','Drop',t.id,icons.drop)+
         '</div></td>'+
         '</tr>';
     }).join('');
   }
   function handleLoginRedirect(response){
-    if (response.redirected && response.url.indexOf('/login')!==-1) {
-      window.location=response.url;
+    if (response.status===401 || (response.redirected && response.url.indexOf('/login')!==-1)) {
+      window.location='/login';
       return true;
     }
     return false;
@@ -145,13 +166,21 @@
     }).then(function(data){
       if (data) render(data.torrents);
     }).catch(function(err){
-      status.textContent=err.message;
+      setError(err.message);
     });
   }
+  torrentfile.addEventListener('change',function(){
+    var n=torrentfile.files.length;
+    fileName.textContent=n===0?defaultFileLabel:(n===1?torrentfile.files[0].name:n+' files');
+  });
   form.addEventListener('submit',function(event){
     event.preventDefault();
+    if (!magnet.value.trim() && torrentfile.files.length===0) {
+      setError('Enter a magnet link or choose a .torrent file');
+      return;
+    }
     addBtn.disabled=true;
-    status.textContent='Adding...';
+    setError('');
     fetch('/api/add',{method:'POST',body:new FormData(form)}).then(function(response){
       if (handleLoginRedirect(response)) return null;
       return response.json().then(function(data){
@@ -162,10 +191,10 @@
       if (!data) return;
       magnet.value='';
       torrentfile.value='';
-      status.textContent='';
+      fileName.textContent=defaultFileLabel;
       render(data.torrents);
     }).catch(function(err){
-      status.textContent=err.message;
+      setError(err.message);
     }).finally(function(){
       addBtn.disabled=false;
     });
@@ -188,14 +217,17 @@
     if (target.matches('.btn-pause')) path='/api/pause';
     if (target.matches('.btn-resume')) path='/api/resume';
     if (target.matches('.btn-verify')) path='/api/verify';
-    if (target.matches('.btn-drop')) path='/api/drop';
+    if (target.matches('.btn-drop')) {
+      if (!confirm('Remove this torrent?')) return;
+      path='/api/drop';
+    }
     if (!path) return;
     target.disabled=true;
     postTorrentAction(path,target.dataset.id).then(function(data){
       if (data) render(data.torrents);
-      status.textContent='';
+      setError('');
     }).catch(function(err){
-      status.textContent=err.message;
+      setError(err.message);
     }).finally(function(){
       target.disabled=false;
     });
