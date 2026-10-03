@@ -14,6 +14,7 @@ type Config struct {
 	Listen   string
 	Username string
 	Password string
+	APIKey   string
 	Engine   torrentmgr.EngineConfig
 }
 
@@ -36,6 +37,7 @@ type FileConfig struct {
 	Listen   *string          `yaml:"listen"`
 	Username *string          `yaml:"username"`
 	Password *string          `yaml:"password"`
+	APIKey   *string          `yaml:"api_key"`
 	Engine   fileEngineConfig `yaml:"engine"`
 }
 
@@ -44,6 +46,7 @@ type Params struct {
 	Listen        string
 	Username      string
 	Password      string
+	APIKey        string
 	DownloadDir   string
 	MaxPeers      int
 	DownloadRate  float64
@@ -89,6 +92,9 @@ func Build(defaults Config, fc FileConfig, p Params) Config {
 	if fc.Password != nil {
 		cfg.Password = *fc.Password
 	}
+	if fc.APIKey != nil {
+		cfg.APIKey = *fc.APIKey
+	}
 	if fc.Engine.DownloadDir != nil {
 		cfg.Engine.DownloadDir = *fc.Engine.DownloadDir
 	}
@@ -121,6 +127,9 @@ func Build(defaults Config, fc FileConfig, p Params) Config {
 	if v := os.Getenv("GTC_PASSWORD"); v != "" {
 		cfg.Password = v
 	}
+	if v := os.Getenv("GTC_API_KEY"); v != "" {
+		cfg.APIKey = v
+	}
 
 	// Layer 4: explicitly-set CLI flags (highest priority).
 	if p.SetFlags["listen"] {
@@ -131,6 +140,9 @@ func Build(defaults Config, fc FileConfig, p Params) Config {
 	}
 	if p.SetFlags["password"] {
 		cfg.Password = p.Password
+	}
+	if p.SetFlags["api-key"] {
+		cfg.APIKey = p.APIKey
 	}
 	if p.SetFlags["download-dir"] {
 		cfg.Engine.DownloadDir = p.DownloadDir

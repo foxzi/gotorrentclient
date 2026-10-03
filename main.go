@@ -34,6 +34,7 @@ func main() {
 	listen := flag.String("listen", "", "Web listen address (default :8080, or GTC_LISTEN)")
 	username := flag.String("username", "", "Web UI username (or GTC_USERNAME)")
 	password := flag.String("password", "", "Web UI password (or GTC_PASSWORD)")
+	apiKey := flag.String("api-key", "", "Web API key (or GTC_API_KEY)")
 	flag.Parse()
 
 	if *showVersion {
@@ -68,6 +69,7 @@ func main() {
 		Listen:   *listen,
 		Username: *username,
 		Password: *password,
+		APIKey:   *apiKey,
 		Engine: torrentmgr.EngineConfig{
 			DownloadDir:      *downloadDir,
 			MaxPeers:         *maxPeers,
@@ -83,6 +85,7 @@ func main() {
 		Listen:        *listen,
 		Username:      *username,
 		Password:      *password,
+		APIKey:        *apiKey,
 		DownloadDir:   *downloadDir,
 		MaxPeers:      *maxPeers,
 		DownloadRate:  *downloadRateMbps,
